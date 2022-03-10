@@ -1,0 +1,32 @@
+import express from 'express';
+import bodyParser from 'body-parser';
+import { emailQueue, sendEmail } from './queues/email.queue';
+import { ExpressAdapter } from '@bull-board/express';
+import { BullAdapter } from '@bull-board/api/bullAdapter'
+import { createBullBoard } from '@bull-board/api';
+
+const app = express();
+
+app.use(bodyParser.json());
+
+const serverAdapter = new ExpressAdapter();
+
+const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
+    queues: [
+        new BullAdapter(emailQueue),
+    ],
+    serverAdapter: serverAdapter
+});
+
+serverAdapter.setBasePath('/admin/queues');
+
+app.use('/admin/queues', serverAdapter.getRouter());
+
+app.post('/send-mail', async (req, res) => {
+    await sendEmail(req.body);
+    return res.send({
+        status: 'ok'
+    });
+});
+
+app.listen(5000, () => console.log('App is running on port 5000'))
