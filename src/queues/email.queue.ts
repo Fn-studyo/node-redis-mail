@@ -1,11 +1,7 @@
 import Bull from "bull";
-import { createBullBoard } from '@bull-board/api';
-import { BullAdapter } from '@bull-board/api/bullAdapter'
 import { emailProcess } from "../processes/email.process";
-import { ExpressAdapter } from "@bull-board/express";
 
-const serverAdapter = new ExpressAdapter();
-
+//redis queue connection
 const emailQueue = new Bull('email', {
     redis: {
         host: '127.0.0.1',
@@ -13,9 +9,12 @@ const emailQueue = new Bull('email', {
     }
 });
 
+//The queue process the email-function(process)
 emailQueue.process(emailProcess);
 
 const sendEmail = (data: any) => {
+
+    //Manages the queue
     emailQueue.add(data, {
         attempts: 5
     });
